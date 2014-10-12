@@ -110,7 +110,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
 def main():
     global URLs
 
-    Parser = argparse.ArgumentParser(description='A simple Google search absed on QWebKit')
+    Parser = argparse.ArgumentParser(description='A simple Google search based on QtWebKit')
     Parser.add_argument('-p', '--pages', dest='MaxPages', action='store', default=0, help='Number of pages to return. Max 60')
     Parser.add_argument('-d', '--domain', dest='Domain', action='store', default="", help='Domain to specificly search on')
     Parser.add_argument('-s', '--ssl', dest='SSL', action='store_true', default=False, help='Use SSL connection')
