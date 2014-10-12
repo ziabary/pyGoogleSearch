@@ -1,4 +1,22 @@
 pyGoogleSearch
 ==============
 
- A python application to search keywords in google
+ A simple Google search based on QWebKit
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p MAXPAGES, --pages MAXPAGES
+                        Number of pages to return. Max 60
+  -d DOMAIN, --domain DOMAIN
+                        Domain to specificly search on
+  -s, --ssl             Use SSL connection
+  -m REGEX, --match REGEX
+                        A RegEx to match before accept
+  -o OUTPUTFILE, --output OUTPUTFILE
+                        Output File
+
+obligatory arguments:
+  -k KEYWORDSFILE, --keywords KEYWORDSFILE
+                        Keywords File
+
+
