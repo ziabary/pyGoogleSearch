@@ -28,31 +28,39 @@ class clsGoogleSearch(QtWebKit.QWebView):
       super(clsGoogleSearch, self).__init__(parent)
 
     def start(self, _keyFile, _urlsFile, _args):
-        self.KeyFile=_keyFile
+        self.Args=_args
         self.URLsFile = _urlsFile
-        self.MaxPages=_args.MaxPages
-        self.Site=_args.Domain
-        self.MatchTo = _args.RegEx
-        self.SSL = _args.SSL
-
+        self.KeyFile = _keyFile
         self.newKeyyword()
     
     def newKeyyword(self):
         self.StartFrom=0
-        self.Keyword = self.KeyFile.readline()
-        if self.Keyword == '':
-            self.close()
-        else:
+        if (self.KeyFile):
+            self.Keyword = self.KeyFile.readline()
+            if self.Keyword == '':
+                self.close()
+            else:
+                self.search()
+        elif self.Args.Keyword:
+            self.Keyword = self.Args.Keyword
+            self.Args.Keyword = None
             self.search()
+        else:
+            return
+            
 
     def search(self):
         QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.AutoLoadImages, False);
         self.DoNothing=False
-        if self.SSL:
-          URLStr='https://www.google.com/search?q='+ ("site:"+self.Site + "+" if len(self.Site) > 0 else "") + self.Keyword.strip()+ ("&start=" + str(self.StartFrom) if self.StartFrom > 0 else "")
+        if self.Args.SSL:
+          URLStr='https://www.google.com/search?q='
         else:
-          URLStr='http://www.google.com/search?q='+ ("site:"+self.Site + "+" if len(self.Site) > 0 else "") + self.Keyword.strip()+ ("&start=" + str(self.StartFrom) if self.StartFrom > 0 else "")
-          
+          URLStr='http://www.google.com/search?q='
+
+        URLStr += ("site:"+self.Args.Domain + "+" if len(self.Args.Domain) > 0 else "") + self.Keyword.strip()
+        URLStr += ("&start=" + str(self.StartFrom) if self.StartFrom > 0 else "")
+        URLStr += ("&lr=lang_" + self.Args.Lang if len(self.Args.Lang)  == 2 else "")
+        
         self.URL = QtCore.QUrl(URLStr)
         print "\n==========================>" + URLStr
         self.loadFinished.connect(self._loadFinished)
@@ -89,7 +97,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             Url=re.sub("^\/url\?q\=","", Url)
             Url=re.sub("\&sa\=U\&e.*","", Url).strip()
 
-            if re.match('^https?\:\/\/.*',Url) and (self.MatchTo == "" or re.match(self.MatchTo, Url)):
+            if re.match('^https?\:\/\/.*',Url) and (self.Args.RegEx == "" or re.match(self.Args.RegEx, Url)):
                 MD5URL = hashlib.md5()
                 MD5URL.update(Url)
                 if MD5URL.hexdigest() not in URLs:
@@ -101,7 +109,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
         self.timer = QtCore.QTimer()
 
         if self.DoNothing == False:
-          if (self.StartFrom >= ((int(self.MaxPages) - 1) * 10)):
+          if (self.StartFrom >= ((int(self.Args.MaxPages) - 1) * 10)):
             self.timer.singleShot(1000, self.newKeyyword)
           else:
             self.StartFrom += 10
@@ -110,34 +118,39 @@ class clsGoogleSearch(QtWebKit.QWebView):
 def main():
     global URLs
 
-    Parser = argparse.ArgumentParser(description='A simple Google search based on QtWebKit')
+    Parser = argparse.ArgumentParser(description='A simple Google search based on QWebKit')
     Parser.add_argument('-p', '--pages', dest='MaxPages', action='store', default=0, help='Number of pages to return. Max 60')
     Parser.add_argument('-d', '--domain', dest='Domain', action='store', default="", help='Domain to specificly search on')
     Parser.add_argument('-s', '--ssl', dest='SSL', action='store_true', default=False, help='Use SSL connection')
     Parser.add_argument('-m', '--match', dest='RegEx', action='store', default="", help='A RegEx to match before accept')
-    Parser.add_argument('-k', '--keywords', dest='KeywordsFile', action='store', default="",required=True, help='Keywords File')
+    Parser.add_argument('-l', '--lang', dest='Lang', action='store', default="", help='Language to search on ISO639')
+    Parser.add_argument('-f', '--file', dest='KeywordsFile', action='store', default="", help='Keywords File')
+    Parser.add_argument('-k', '--keyword', dest='Keyword', action='store', default="", help='Keyword to search')
     Parser.add_argument('-o', '--output', dest='OutputFile', action='store', default="", help='Output File')
     
-    args = Parser.parse_args()
+    Args = Parser.parse_args()
 
-    if not args.KeywordsFile:
+    if not Args.KeywordsFile and not Args.Keyword:
+        print "You must provide either a keyword or a file"
         Parser.print_help()
-        exit()
+        sys.exit(-1);
 
     qApp = QtGui.QApplication(sys.argv)
 
-    try:
-      KeyFile  = open(args.KeywordsFile,  "r" )
-    except:
-      print "Unable to READ: ", args.KeywordsFile
-      sys.exit(-1);
+
+    if Args.KeywordsFile :
+      try:
+        KeyFile  = open(Args.KeywordsFile,  "r" )
+      except:
+        print "Unable to READ: ", Args.KeywordsFile
+        sys.exit(-1);
 
 
-    if not args.OutputFile :
-      args.OutputFile = "Urls.csv"
+    if not Args.OutputFile :
+      Args.OutputFile = "Urls.csv"
       
     try:
-      OldFile  = open(args.OutputFile,  "r" )
+      OldFile  = open(Args.OutputFile,  "r" )
       while True:
         URL=OldFile.readline().strip()
         if URL == '':
@@ -150,22 +163,25 @@ def main():
       True
 
     try:
-      OutFile  = open(args.OutputFile,  "a" )
+      OutFile  = open(Args.OutputFile,  "a" )
     except:
       print "Unable to APPEND: URLs.txt"
       sys.exit(-1);
 
-      
+    print "Old File has ", len(URLs), " Entries"
+
+    
     GoogleSearch = clsGoogleSearch()
-    GoogleSearch.start(KeyFile, OutFile, args)
+
+    if Args.Keyword:
+      GoogleSearch.Args=Args
+      GoogleSearch.URLsFile=OutFile
+      GoogleSearch.KeyFile=None
+      GoogleSearch.newKeyyword()
+    else:
+      GoogleSearch.start(KeyFile, OutFile, Args)
     
     sys.exit(qApp.exec_())
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
