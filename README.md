@@ -11,12 +11,16 @@ optional arguments:
   
   -s, --ssl                                 Use SSL connection
   
+  -l LANG, --lang LANG                      Language to search on (ISO639)
+
   -m REGEX, --match REGEX                   A RegEx to match before accept
   
   -o OUTPUTFILE, --output OUTPUTFILE        Output File
 
-obligatory arguments:
+  -f KEYWORDSFILE, --file KEYWORDSFILE      Keywords File
   
-  -k KEYWORDSFILE, --keywords KEYWORDSFILE  Keywords File
+  -k KEYWORD, --keyword KEYWORD             Keyword to search
+
+
 
 
