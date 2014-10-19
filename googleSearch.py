@@ -32,7 +32,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
         self.URLsFile = _urlsFile
         self.KeyFile = _keyFile
         self.newKeyyword()
-    
+
     def newKeyyword(self):
         self.StartFrom=0
         if (self.KeyFile):
@@ -47,7 +47,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             self.search()
         else:
             return
-            
+
 
     def search(self):
         QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.AutoLoadImages, False);
@@ -60,7 +60,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
         URLStr += ("site:"+self.Args.Domain + "+" if len(self.Args.Domain) > 0 else "") + self.Keyword.strip()
         URLStr += ("&start=" + str(self.StartFrom) if self.StartFrom > 0 else "")
         URLStr += ("&lr=lang_" + self.Args.Lang if len(self.Args.Lang)  == 2 else "")
-        
+
         self.URL = QtCore.QUrl(URLStr)
         print "\n==========================>" + URLStr
         self.loadFinished.connect(self._loadFinished)
@@ -76,7 +76,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
 
         print "Load Finished. New URLs:"
         self.stop();
-        
+
         PageContent=str(self.page().mainFrame().toHtml().toAscii());
         if 'name="captcha"' in PageContent:
             print "\n\n****************************** Captcha needed ********************************\n\n"
@@ -109,7 +109,10 @@ class clsGoogleSearch(QtWebKit.QWebView):
         self.timer = QtCore.QTimer()
 
         if self.DoNothing == False:
-          if (self.StartFrom >= ((int(self.Args.MaxPages) - 1) * 10)):
+          if not '>Next</span>' in PageContent:
+            print "----- No more pages found ----\n"
+            self.timer.singleShot(1000, self.newKeyyword)
+          elif (self.StartFrom >= ((int(self.Args.MaxPages) - 1) * 10)):
             self.timer.singleShot(1000, self.newKeyyword)
           else:
             self.StartFrom += 10
@@ -127,7 +130,7 @@ def main():
     Parser.add_argument('-f', '--file', dest='KeywordsFile', action='store', default="", help='Keywords File')
     Parser.add_argument('-k', '--keyword', dest='Keyword', action='store', default="", help='Keyword to search')
     Parser.add_argument('-o', '--output', dest='OutputFile', action='store', default="", help='Output File')
-    
+
     Args = Parser.parse_args()
 
     if not Args.KeywordsFile and not Args.Keyword:
@@ -148,7 +151,7 @@ def main():
 
     if not Args.OutputFile :
       Args.OutputFile = "Urls.csv"
-      
+
     try:
       OldFile  = open(Args.OutputFile,  "r" )
       while True:
@@ -170,7 +173,7 @@ def main():
 
     print "Old File has ", len(URLs), " Entries"
 
-    
+
     GoogleSearch = clsGoogleSearch()
 
     if Args.Keyword:
@@ -180,8 +183,9 @@ def main():
       GoogleSearch.newKeyyword()
     else:
       GoogleSearch.start(KeyFile, OutFile, Args)
-    
+
     sys.exit(qApp.exec_())
 
 if __name__ == "__main__":
     main()
+    
