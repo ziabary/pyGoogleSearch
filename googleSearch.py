@@ -10,6 +10,7 @@ import time
 import hashlib
 import re
 import argparse
+from itertools import product
 
 URLs={}
 
@@ -30,24 +31,46 @@ class clsGoogleSearch(QtWebKit.QWebView):
     def start(self, _keyFile, _urlsFile, _args):
         self.Args=_args
         self.URLsFile = _urlsFile
-        self.KeyFile = _keyFile
-        self.newKeyyword()
+        self.AllKeyword = []
+        Keywords = _keyFile.readlines()
+        for Keyword in  Keywords:
+            if len(Keyword.strip()) > 0:
+              self.AllKeyword.append(Keyword.strip())
 
-    def newKeyyword(self):
+        if self.Args.KeywordsCombination > 0:
+            for Keyword1 in  Keywords:
+              if len(Keyword1.strip()) > 0:
+                for Keyword2 in  Keywords:
+                  if len(Keyword2.strip()) > 0:
+                    self.AllKeyword.append(Keyword1.strip() + " " + Keyword2.strip())
+
+        if self.Args.KeywordsCombination > 1:
+            for Keyword1 in Keywords:
+              if len(Keyword1.strip()) > 0:
+                for Keyword2 in Keywords:
+                  if len(Keyword2.strip()) > 0:
+                    for Keyword3 in  Keywords:
+                      if len(Keyword3.strip()) > 0:
+                        self.AllKeyword.append(Keyword1.strip() + " " + Keyword2.strip() + " " + Keyword3.strip())
+
+        self.KeywordIndex=0
+        self.newKeyword()
+
+    def newKeyword(self):
         self.StartFrom=0
-        if (self.KeyFile):
-            self.Keyword = self.KeyFile.readline()
-            if self.Keyword == '':
-                self.close()
-            else:
-                self.search()
-        elif self.Args.Keyword:
+        if self.Args.Keyword:
             self.Keyword = self.Args.Keyword
             self.Args.Keyword = None
             self.search()
-        else:
-            return
-
+        elif self.Args.KeywordsFile:
+            if len(self.AllKeyword) == self.KeywordIndex:
+                self.close()
+                return
+            
+            self.Keyword = self.AllKeyword[self.KeywordIndex]
+            self.KeywordIndex+=1
+            self.search()
+            
 
     def search(self):
         QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.AutoLoadImages, False);
@@ -130,6 +153,7 @@ def main():
     Parser.add_argument('-f', '--file', dest='KeywordsFile', action='store', default="", help='Keywords File')
     Parser.add_argument('-k', '--keyword', dest='Keyword', action='store', default="", help='Keyword to search')
     Parser.add_argument('-o', '--output', dest='OutputFile', action='store', default="", help='Output File')
+    Parser.add_argument('-c', '--combinations', dest='KeywordsCombination', action='store', default=0, help='Combines Keywords n rounds Max 3')
 
     Args = Parser.parse_args()
 
@@ -188,4 +212,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
