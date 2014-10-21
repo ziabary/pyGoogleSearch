@@ -41,16 +41,16 @@ class clsGoogleSearch(QtWebKit.QWebView):
             for Keyword1 in  Keywords:
               if len(Keyword1.strip()) > 0:
                 for Keyword2 in  Keywords:
-                  if len(Keyword2.strip()) > 0:
+                  if len(Keyword2.strip()) > 0 and not Keyword2 == Keyword1:
                     self.AllKeyword.append(Keyword1.strip() + " " + Keyword2.strip())
 
         if self.Args.KeywordsCombination > 1:
             for Keyword1 in Keywords:
               if len(Keyword1.strip()) > 0:
                 for Keyword2 in Keywords:
-                  if len(Keyword2.strip()) > 0:
+                  if len(Keyword2.strip()) > 0 and not Keyword2 == Keyword1:
                     for Keyword3 in  Keywords:
-                      if len(Keyword3.strip()) > 0:
+                      if len(Keyword3.strip()) > 0 and Keyword2 != Keyword3 and Keyword1 != Keyword3:
                         self.AllKeyword.append(Keyword1.strip() + " " + Keyword2.strip() + " " + Keyword3.strip())
 
         self.KeywordIndex=0
@@ -69,7 +69,9 @@ class clsGoogleSearch(QtWebKit.QWebView):
             
             self.Keyword = self.AllKeyword[self.KeywordIndex]
             self.KeywordIndex+=1
-            self.search()
+            print self.Keyword
+            self.newKeyword()
+            #self.search()
             
 
     def search(self):
