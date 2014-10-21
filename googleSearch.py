@@ -136,7 +136,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             print "----- No more pages found ----\n"
             self.timer.singleShot(1000, self.newKeyyword)
           elif (self.StartFrom >= ((int(self.Args.MaxPages) - 1) * 10)):
-            self.timer.singleShot(1000, self.newKeyyword)
+            self.timer.singleShot(1000, self.newKeyword)
           else:
             self.StartFrom += 10
             self.timer.singleShot(1000, self.search)
