@@ -69,9 +69,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             
             self.Keyword = self.AllKeyword[self.KeywordIndex]
             self.KeywordIndex+=1
-            print self.Keyword
-            self.newKeyword()
-            #self.search()
+            self.search()
             
 
     def search(self):
