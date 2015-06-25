@@ -204,7 +204,7 @@ def main():
       GoogleSearch.Args=Args
       GoogleSearch.URLsFile=OutFile
       GoogleSearch.KeyFile=None
-      GoogleSearch.newKeyyword()
+      GoogleSearch.newKeyword()
     else:
       GoogleSearch.start(KeyFile, OutFile, Args)
 
