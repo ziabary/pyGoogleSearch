@@ -66,11 +66,15 @@ class clsGoogleSearch(QtWebKit.QWebView):
             if len(self.AllKeyword) == self.KeywordIndex:
                 self.close()
                 return
-            
+
             self.Keyword = self.AllKeyword[self.KeywordIndex]
             self.KeywordIndex+=1
             self.search()
-            
+        else:
+          print "Finished"
+          exit(0)
+          
+
 
     def search(self):
         QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.AutoLoadImages, False);
@@ -118,7 +122,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             if re.match('.*googleusercontent.*',Url) or  re.match('^\/[^url].*',Url) or re.match(".*\.google.com\/.*",Url):
                 continue
             Url=re.sub("^\/url\?q\=","", Url)
-            Url=re.sub("\&sa\=U\&e.*","", Url).strip()
+            Url=re.sub("\&sa\=U\&ve.*","", Url).strip()
 
             if re.match('^https?\:\/\/.*',Url) and (self.Args.RegEx == "" or re.match(self.Args.RegEx, Url)):
                 MD5URL = hashlib.md5()
@@ -140,6 +144,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
           else:
             self.StartFrom += 10
             self.timer.singleShot(1000, self.search)
+
 
 def main():
     global URLs
