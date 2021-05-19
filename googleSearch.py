@@ -5,7 +5,8 @@ from PyQt4 import QtWebKit
 import time
 import sys
 import os
-from sgmllib import SGMLParser
+# from sgmllib import SGMLParser
+from bs4 import BeautifulSoup
 import time
 import hashlib
 import re
@@ -14,15 +15,6 @@ from itertools import product
 
 URLs={}
 
-class URLLister(SGMLParser):
-    def reset(self):
-        SGMLParser.reset(self)
-        self.Urls = []
-
-    def start_a(self, attrs):
-        href = [v for k, v in attrs if k=='href']
-        if href:
-            self.Urls.extend(href)
 
 class clsGoogleSearch(QtWebKit.QWebView):
     def __init__(self, parent=None):
@@ -71,7 +63,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
             self.KeywordIndex+=1
             self.search()
         else:
-          print "Finished"
+          print("Finished")
           exit(0)
           
 
@@ -89,7 +81,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
         URLStr += ("&lr=lang_" + self.Args.Lang if len(self.Args.Lang)  == 2 else "")
 
         self.URL = QtCore.QUrl(URLStr)
-        print "\n==========================>" + URLStr
+        print("\n==========================>" + URLStr)
         self.loadFinished.connect(self._loadFinished)
         self.load(self.URL)
         self.show()
@@ -101,12 +93,12 @@ class clsGoogleSearch(QtWebKit.QWebView):
         global URLs
         self.loadFinished.disconnect(self._loadFinished)
 
-        print "Load Finished. New URLs:"
+        print("Load Finished. New URLs:")
         self.stop();
 
-        PageContent=str(self.page().mainFrame().toHtml().toAscii());
+        PageContent=str(self.page().mainFrame().toHtml().encode('utf-8'));
         if 'name="captcha"' in PageContent:
-            print "\n\n****************************** Captcha needed ********************************\n\n"
+            print("\n\n****************************** Captcha needed ********************************\n\n")
             self.loadFinished.connect(self._loadFinished)
             if self.DoNothing == False:
                 QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.AutoLoadImages, True);
@@ -115,10 +107,10 @@ class clsGoogleSearch(QtWebKit.QWebView):
             else:
                 self.DoNothing=False
             return
-
-        Parser = URLLister()
-        Parser.feed(PageContent)
-        for Url in Parser.Urls:
+        soup = BeautifulSoup(PageContent)
+        
+        my_Urls = [a.get('href') for a in soup.find_all('a') if a and a.get('href')]
+        for Url in my_Urls:
             if re.match('.*googleusercontent.*',Url) or  re.match('^\/[^url].*',Url) or re.match(".*\.google.com\/.*",Url):
                 continue
             Url=re.sub("^\/url\?q\=","", Url)
@@ -126,9 +118,9 @@ class clsGoogleSearch(QtWebKit.QWebView):
 
             if re.match('^https?\:\/\/.*',Url) and (self.Args.RegEx == "" or re.match(self.Args.RegEx, Url)):
                 MD5URL = hashlib.md5()
-                MD5URL.update(Url)
+                MD5URL.update(Url.encode('utf-8'))
                 if MD5URL.hexdigest() not in URLs:
-                    print Url
+                    print(Url)
                     URLs[MD5URL.hexdigest()] = 1;
                     self.URLsFile.write(Url+"\n")
 
@@ -137,7 +129,7 @@ class clsGoogleSearch(QtWebKit.QWebView):
 
         if self.DoNothing == False:
           if not '>Next</span>' in PageContent:
-            print "----- No more pages found ----\n"
+            print("----- No more pages found ----\n")
             self.timer.singleShot(1000, self.newKeyword)
           elif (self.StartFrom >= ((int(self.Args.MaxPages) - 1) * 10)):
             self.timer.singleShot(1000, self.newKeyword)
@@ -163,7 +155,7 @@ def main():
     Args = Parser.parse_args()
 
     if not Args.KeywordsFile and not Args.Keyword:
-        print "You must provide either a keyword or a file"
+        print("You must provide either a keyword or a file")
         Parser.print_help()
         sys.exit(-1);
 
@@ -174,7 +166,7 @@ def main():
       try:
         KeyFile  = open(Args.KeywordsFile,  "r" )
       except:
-        print "Unable to READ: ", Args.KeywordsFile
+        print("Unable to READ: ", Args.KeywordsFile)
         sys.exit(-1);
 
 
@@ -197,10 +189,10 @@ def main():
     try:
       OutFile  = open(Args.OutputFile,  "a" )
     except:
-      print "Unable to APPEND: URLs.txt"
+      print("Unable to APPEND: URLs.txt")
       sys.exit(-1);
 
-    print "Old File has ", len(URLs), " Entries"
+    print("Old File has ", len(URLs), " Entries")
 
 
     GoogleSearch = clsGoogleSearch()
